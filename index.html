@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google-site-verification" content="XAYg90sqbCgD-X0CFuKuFswF-DEyAB0ChXEjdB8KWJk" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SteamForge Hub — Manifests & Lua Generator</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <!-- Fonts & icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Preload Google Fonts stylesheet to avoid render-blocking -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SEO & Social -->
+    <meta name="description" content="SteamForge Hub — check and download Steam manifests by AppID. Fast, private, Steam-styled interface.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://steamforgehub.pages.dev/">
+    <meta property="og:title" content="SteamForge Hub — Manifests & Lua Generator">
+    <meta property="og:description" content="Check and download Steam manifests by AppID.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://steamforgehub.pages.dev/">
+    <meta property="og:image" content="https://steamforgehub.pages.dev/favicon.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SteamForge Hub — Manifests & Lua Generator">
+    <meta name="twitter:description" content="Check and download Steam manifests by AppID.">
+    <meta name="theme-color" content="#071021">
+
+    <style>
+        /* Theme variables */
+        :root{
+            --bg:#071021;
+            --panel:rgba(20,28,36,0.6);
+            --muted:#94a3b8;
+            --accent-blue:#2563eb;
+            --accent-purple:#7c3aed;
+            --accent-green:#16a34a;
+            --accent-emerald:#059669;
+            --accent-pink:#ec4899;
+            --glass: rgba(255,255,255,0.03);
+        }
+
+        /* Base */
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg,#071021 0%, #0f172a 100%);
+            color:#e2e8f0;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            min-height:100vh;
+            padding-top:64px; /* espacio para la barra superior */
+        }
+
+        /* Steam-like top bar */
+        .steam-bar{position:fixed;inset:0 0 auto 0;height:56px;background:linear-gradient(180deg,#071018 0%, #0b1522 100%);border-bottom:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;z-index:2000;padding:0 12px}
+        .steam-bar .container{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between}
+        .steam-logo{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:700}
+        .steam-logo .fa-steam{font-size:22px;color:#c6e6ff}
+        .steam-nav a{color:var(--muted);text-decoration:none;margin-left:18px;font-size:14px}
+        .steam-nav a:hover{color:#fff}
+
+        /* Typography */
+        .orbitron{font-family:'Orbitron',sans-serif}
+        .glow-text{text-shadow:0 0 10px rgba(102,255,153,0.08)}
+
+        /* Small utility classes (subset to match original markup) */
+        .flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}
+        .p-4{padding:1rem}.max-w-4xl{max-width:68rem}.w-full{width:100%}.mx-auto{margin-left:auto;margin-right:auto}.text-center{text-align:center}
+        .mb-10{margin-bottom:2.5rem}.mb-2{margin-bottom:0.5rem}.mt-2{margin-top:0.5rem}.mt-6{margin-top:1.5rem}
+        .rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:1rem}
+        .text-slate-300{color:#cbd5e1}.text-slate-400{color:#94a3b8}.text-blue-400{color:#60a5fa}
+        .text-purple-400{color:#c7b3ff}.text-green-400{color:#86efac}.text-red-300{color:#fca5a5}
+        .bg-slate-800-50{background:rgba(15,23,42,0.5)}.backdrop-blur-sm{backdrop-filter:blur(6px)}
+
+        /* Panels */
+        .cyber-border{position:relative;border-radius:12px}
+        .cyber-border::before{content:'';position:absolute;inset:0;border-radius:12px;padding:2px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));-webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+        .glow-box{box-shadow:0 8px 30px rgba(0,0,0,0.5)}
+
+        /* Inputs & buttons */
+        input[type="text"]{background:rgba(10,15,25,0.65);border:1px solid rgba(255,255,255,0.04);color:#fff;padding:0.75rem 1rem;border-radius:0.6rem;width:100%}
+        input[type="text"]::placeholder{color:#9aa6b2}
+        input[type="text"]:focus{outline:none;box-shadow:0 0 0 4px rgba(22,163,74,0.12);border-color:rgba(22,163,74,0.6)}
+
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:0.7rem 1.1rem;border-radius:0.7rem;color:#fff;font-weight:700;border:none;text-decoration:none}
+        .bg-gradient-to-r{background-image:linear-gradient(90deg,var(--from-color),var(--to-color))}
+        .from-blue-600{--from-color:var(--accent-blue)}.to-purple-600{--to-color:var(--accent-purple)}
+        .from-green-600{--from-color:var(--accent-green)}.to-emerald-600{--to-color:var(--accent-emerald)}
+        .from-purple-600{--from-color:var(--accent-purple)}.to-pink-600{--to-color:var(--accent-pink)}
+
+        .pulse-animation{animation:pulse 2s infinite}@keyframes pulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.03);opacity:0.85}100%{transform:scale(1);opacity:1}}
+
+        .terminal-text{font-family: 'Courier New', monospace;background:rgba(20,26,34,0.7);border-left:3px solid var(--accent-blue);padding:1rem;border-radius:0.6rem;color:#9fffb0}
+
+        /* Modal */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:1500}
+        .modal-content{background:linear-gradient(180deg,#0f1724 0%, #22303a 100%);border:1px solid rgba(255,255,255,0.04);padding:1.5rem;border-radius:0.75rem;max-width:520px;width:92%}
+
+        /* Responsive helpers */
+        @media(min-width:768px){.md\:text-5xl{font-size:2.5rem}.md\:p-8{padding:2rem}.md\:flex-row{flex-direction:row}}
+
+        footer{opacity:0.9}
+    </style>
+        <!-- Structured Data for better indexing -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "SteamForge Hub",
+            "url": "https://steamforgehub.pages.dev/",
+            "description": "Check and download Steam manifests by AppID. Fast, private.",
+            "publisher": {
+                "@type": "Person",
+                "name": "CrackDroid926",
+                "url": "https://github.com/crackdroid926"
+            }
+        }
+        </script>
+</head>
+<body>
+
+    <div class="steam-bar" role="navigation">
+        <div class="container">
+            <div class="steam-logo"><i class="fab fa-steam"></i><span class="orbitron">SteamForge</span></div>
+            <div class="steam-nav">
+                <a href="#">Home</a>
+                <a href="#resultsSection">Manifests</a>
+                <a href="https://github.com/crackdroid926" target="_blank" rel="noopener">Owner</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl w-full mx-auto p-4">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="orbitron md:text-5xl" style="font-size:2rem;margin:0 0 8px"><i class="fab fa-steam" style="margin-right:8px;color:#c6e6ff"></i>STEAMFORGE HUB</h1>
+            <p class="text-slate-300" style="margin:6px 0 0">Check and download game manifests by Steam AppID</p>
+            <p class="text-blue-400 text-sm mt-2">MADE BY <a href="https://github.com/crackdroid926" class="text-purple-400" target="_blank" rel="noopener">CrackDroid926</a></p>
+            <p style="margin-top:8px"><a href="steamtools.exe" style="color:var(--accent-blue)">Download Steamtools from Here</a></p>
+            <div style="display:flex;justify-content:center;margin-top:18px"><div style="width:64px;height:6px;background:linear-gradient(90deg,var(--accent-blue),var(--accent-purple));border-radius:9999px"></div></div>
+        </header>
+
+        <!-- Main Card -->
+        <main class="cyber-border bg-slate-800-50 backdrop-blur-sm rounded-xl p-6 md:p-8 glow-box">
+            <!-- Input Section -->
+            <div class="mb-8">
+                <div class="flex md:flex-row" style="gap:16px;flex-wrap:wrap">
+                    <div style="flex:1;min-width:220px">
+                        <label for="gameId" class="block text-sm font-medium text-slate-300 mb-2 orbitron">ENTER STEAM APPID</label>
+                        <div style="position:relative">
+                            <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--accent-blue)"><i class="fas fa-gamepad"></i></div>
+                            <input type="text" id="gameId" placeholder="e.g. 220968" class="input-glow" style="padding-left:44px;">
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:flex-end;align-items:center">
+                        <button id="checkBtn" class="pulse-animation orbitron bg-gradient-to-r from-blue-600 to-purple-600 btn" style="margin-left:8px">CHECK MANIFEST</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" style="display:none">
+                <div class="terminal-text rounded-lg mb-6">
+                    <div style="display:flex;gap:8px;margin-bottom:8px">
+                        <div style="width:10px;height:10px;background:#ef4444;border-radius:50%"></div>
+                        <div style="width:10px;height:10px;background:#f59e0b;border-radius:50%"></div>
+                        <div style="width:10px;height:10px;background:#22c55e;border-radius:50%"></div>
+                    </div>
+                    <pre id="terminalOutput" style="white-space:pre-wrap;overflow-x:auto;margin:0"></pre>
+                </div>
+
+                <div id="downloadSection" style="display:none;text-align:center">
+                    <a id="downloadLink" class="orbitron btn bg-gradient-to-r from-green-600 to-emerald-600" role="button"><i class="fas fa-download"></i>&nbsp; DOWNLOAD MANIFEST</a>
+                    <p class="text-slate-300 mt-3 text-sm">File will be downloaded from our servers</p>
+                </div>
+
+                <div id="multiDownloadSection" style="display:none;text-align:center;margin-top:12px">
+                    <a id="multiDownloadLink" class="orbitron btn bg-gradient-to-r from-purple-600 to-pink-600" role="button"><i class="fas fa-download"></i>&nbsp; MULTI-SOURCE DOWNLOAD</a>
+                    <p class="text-slate-300 mt-3 text-sm">if the 1st link doesn't work try this</p>
+                </div>
+
+                <div id="notFoundSection" style="display:none;text-align:center;padding:24px">
+                    <div style="display:inline-flex;align-items:center;background:rgba(139,39,39,0.15);border:1px solid rgba(139,39,39,0.35);padding:12px;border-radius:8px">
+                        <i class="fas fa-exclamation-triangle" style="color:#f87171;font-size:22px;margin-right:12px"></i>
+                        <div>
+                            <h3 class="orbitron text-red-300" style="margin:0;color:#fca5a5">MANIFEST NOT FOUND</h3>
+                            <p class="text-slate-300" style="margin:4px 0 0">No manifest exists for this Steam AppID</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="mt-10 pt-6" style="border-top:1px solid rgba(255,255,255,0.04)">
+                <div style="display:grid;grid-template-columns:1fr;gap:16px">
+                    <div style="background:rgba(10,15,25,0.35);padding:12px;border-radius:8px">
+                        <div style="color:var(--accent-blue);margin-bottom:8px"><i class="fas fa-info-circle"></i></div>
+                        <h3 class="orbitron" style="margin:0 0 6px">How It Works</h3>
+                        <p class="text-slate-300" style="margin:0;font-size:13px">Enter a Steam AppID to check if a game manifest exists in our database.</p>
+                    </div>
+                    <div style="background:rgba(10,15,25,0.35);padding:12px;border-radius:8px">
+                        <div style="color:var(--accent-purple);margin-bottom:8px"><i class="fas fa-database"></i></div>
+                        <h3 class="orbitron" style="margin:0 0 6px">Database</h3>
+                        <p class="text-slate-300" style="margin:0;font-size:13px">Manifests are stored on GitHub and downloaded directly from their servers.</p>
+                    </div>
+                    <div style="background:rgba(10,15,25,0.35);padding:12px;border-radius:8px">
+                        <div style="color:var(--accent-green);margin-bottom:8px"><i class="fas fa-shield-alt"></i></div>
+                        <h3 class="orbitron" style="margin:0 0 6px">Privacy</h3>
+                        <p class="text-slate-300" style="margin:0;font-size:13px">No data is stored or logged. All checks happen client-side.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-slate-400 text-sm" style="margin-top:24px">
+            <p>© 2025 SteamForge Hub | MADE BY <a href="https://github.com/crackdroid926" class="text-blue-400" target="_blank" rel="noopener">CrackDroid926</a></p>
+            <p style="margin-top:6px">Not affiliated with Valve or Steam</p>
+        </footer>
+    </div>
+
+    <!-- Scripts (same logic as original) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkBtn = document.getElementById('checkBtn');
+        const gameIdInput = document.getElementById('gameId');
+        const resultsSection = document.getElementById('resultsSection');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const downloadSection = document.getElementById('downloadSection');
+        const downloadLink = document.getElementById('downloadLink');
+        const multiDownloadSection = document.getElementById('multiDownloadSection');
+        const multiDownloadLink = document.getElementById('multiDownloadLink');
+        const notFoundSection = document.getElementById('notFoundSection');
+
+        checkBtn.addEventListener('click', checkManifest);
+        gameIdInput.addEventListener('keypress', e => { if (e.key === 'Enter') checkManifest(); });
+
+        function base32Encode(input) {
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+            let bits = "";
+            let output = "";
+            for (let i = 0; i < input.length; i++) bits += input.charCodeAt(i).toString(2).padStart(8, "0");
+            for (let j = 0; j < bits.length; j += 5) {
+                const chunk = bits.substring(j, j + 5);
+                if (chunk.length < 5) bits += "0".repeat(5 - chunk.length);
+                output += alphabet[parseInt(chunk, 2)] || "";
+            }
+            return output.replace(/=+$/, "");
+        }
+
+        function checkManifest() {
+            const gameId = gameIdInput.value.trim();
+            if (!gameId || !/^\d+$/.test(gameId)) { showError('Please enter a valid Steam AppID (numbers only)'); return; }
+
+            checkBtn.disabled = true;
+            checkBtn.classList.remove('pulse-animation');
+            checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px"></i> CHECKING...';
+
+            resultsSection.style.display = '';
+            downloadSection.style.display = 'none';
+            multiDownloadSection.style.display = 'none';
+            notFoundSection.style.display = 'none';
+            terminalOutput.textContent = '';
+
+            typeTerminalText(`> Initiating manifest check for Steam AppID: ${gameId}\n`, 0);
+
+            setTimeout(() => {
+                typeTerminalText(`> Searching database...\n> Manifest found in database!\n> Encoding request ID (Base32)...\n`, 100);
+                const base32Id = base32Encode(gameId);
+                const githubUrl = `https://api.fuad0.workers.dev/proxy?id=${base32Id}`;
+                const multiSourceUrl = `https://api-psi-eight-12.vercel.app/proxy?id=${base32Id}`;
+
+                typeTerminalText(`> Preparing download link...\n> Waiting 8 seconds before download...\n`, 400);
+
+                let seconds = 8;
+
+                const interval = setInterval(() => {
+                    seconds--;
+
+                    if (seconds <= 0) {
+                        clearInterval(interval);
+
+                        typeTerminalText(`> Ready for download.\n`, 0);
+                        downloadLink.href = githubUrl;
+                        downloadSection.style.display = '';
+
+                        multiDownloadLink.href = multiSourceUrl;
+                        multiDownloadSection.style.display = '';
+
+                        checkBtn.innerHTML = '<i class="fas fa-check-circle" style="margin-right:8px"></i> CHECK COMPLETE';
+                        checkBtn.style.backgroundImage = 'linear-gradient(90deg, #16a34a, #059669)';
+                        checkBtn.disabled = false;
+                    }
+                }, 1000);
+            }, 1000);
+        }
+
+        function typeTerminalText(text, initialDelay) {
+            let i = 0;
+            setTimeout(() => {
+                const interval = setInterval(() => {
+                    if (i < text.length) {
+                        terminalOutput.textContent += text.charAt(i);
+                        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                        i++;
+                    } else clearInterval(interval);
+                }, 20);
+            }, initialDelay);
+        }
+
+        function showError(message) {
+            terminalOutput.textContent = `> ERROR: ${message}\n`;
+            resultsSection.style.display = '';
+            downloadSection.style.display = 'none';
+            multiDownloadSection.style.display = 'none';
+            notFoundSection.style.display = 'none';
+            checkBtn.innerHTML = 'CHECK MANIFEST';
+            checkBtn.disabled = false;
+        }
+
+    });
+    </script>
+
+    <!-- Third-party ad/analytics scripts removed to improve privacy and performance -->
+    <script>
+    // Optional third-party scripts removed intentionally. No external ad scripts are loaded.
+    </script>
+</body>
+</html>

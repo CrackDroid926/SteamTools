@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Sitemap: https://steamforgehub.pages.dev/sitemap.xml
+# Crawl-delay can be adjusted in Cloudflare settings if needed
